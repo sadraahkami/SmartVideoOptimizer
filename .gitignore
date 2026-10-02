@@ -30,6 +30,8 @@ tests/fixtures/*.ts
 *.log
 logs/
 .cache/
+queue.db*
+hardware_capabilities.json
 
 # Internal technical documentation (STRICT: Local only, never commit/push)
 TECHNICAL_DOCS.md
