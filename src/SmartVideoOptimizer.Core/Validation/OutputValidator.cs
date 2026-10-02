@@ -7,6 +7,7 @@ namespace SmartVideoOptimizer.Core.Validation;
 public sealed record ValidationResult
 {
     public bool IsValid { get; init; }
+    public string OutputFilePath { get; init; } = string.Empty;
     public long ActualSizeBytes { get; init; }
     public long? TargetSizeBytes { get; init; }
     public bool SizeExceeded { get; init; }
@@ -43,6 +44,7 @@ public sealed class OutputValidator
             return new ValidationResult
             {
                 IsValid = false,
+                OutputFilePath = outputFilePath,
                 ErrorMessage = $"Output file was not created: {outputFilePath}"
             };
         }
@@ -54,6 +56,7 @@ public sealed class OutputValidator
             return new ValidationResult
             {
                 IsValid = false,
+                OutputFilePath = outputFilePath,
                 ActualSizeBytes = 0,
                 ErrorMessage = "Output file has zero bytes."
             };
@@ -75,6 +78,7 @@ public sealed class OutputValidator
                     return new ValidationResult
                     {
                         IsValid = false,
+                        OutputFilePath = outputFilePath,
                         ActualSizeBytes = actualSize,
                         TargetSizeBytes = target,
                         SizeExceeded = true,
@@ -95,6 +99,7 @@ public sealed class OutputValidator
                 return new ValidationResult
                 {
                     IsValid = false,
+                    OutputFilePath = outputFilePath,
                     ActualSizeBytes = actualSize,
                     ErrorMessage = "Validation failed: Output container has no video streams."
                 };
@@ -107,6 +112,7 @@ public sealed class OutputValidator
                 return new ValidationResult
                 {
                     IsValid = false,
+                    OutputFilePath = outputFilePath,
                     ActualSizeBytes = actualSize,
                     ErrorMessage = $"Validation warning: Output duration ({outputAsset.Duration:mm\\:ss}) deviates from source ({plan.Duration:mm\\:ss})."
                 };
@@ -115,6 +121,7 @@ public sealed class OutputValidator
             return new ValidationResult
             {
                 IsValid = true,
+                OutputFilePath = outputFilePath,
                 ActualSizeBytes = actualSize,
                 TargetSizeBytes = request.TargetSizeBytes,
                 SizeExceeded = sizeExceeded,
@@ -126,6 +133,7 @@ public sealed class OutputValidator
             return new ValidationResult
             {
                 IsValid = false,
+                OutputFilePath = outputFilePath,
                 ActualSizeBytes = actualSize,
                 ErrorMessage = $"Failed to probe and read output file: {ex.Message}"
             };

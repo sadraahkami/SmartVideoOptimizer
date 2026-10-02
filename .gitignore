@@ -6,6 +6,8 @@ publish/
 *.exe
 *.dll
 *.pdb
+*.deps.json
+*.runtimeconfig.json
 
 
 # Visual Studio & IDE files

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Windows;
 using System.Windows.Input;
 using Microsoft.Win32;
 using SmartVideoOptimizer.Core.Domain;
@@ -46,6 +47,7 @@ public sealed class MainViewModel : ViewModelBase
     private ResolutionPolicy _selectedResolution = ResolutionPolicy.KeepOriginal;
     private bool _neverExceedTarget = true;
     private bool _isAdvancedOpen;
+    private string? _customOutputFolder;
 
     // Execution State
     private bool _isEncoding;
@@ -103,23 +105,76 @@ public sealed class MainViewModel : ViewModelBase
             }
         });
 
+        SelectOutputFolderCommand = new RelayCommand(OnSelectOutputFolder);
+        ResetOutputFolderCommand = new RelayCommand(() => CustomOutputFolder = null);
+        CopyPathCommand = new RelayCommand(OnCopyPath);
+
         StartEncodingCommand = new AsyncRelayCommand(ExecuteEncodingAsync, () => !IsEncoding && HasAsset);
         CancelEncodingCommand = new RelayCommand(CancelEncoding, () => IsEncoding);
         GeneratePreviewCommand = new AsyncRelayCommand(ExecutePreviewAsync, () => !IsPreviewing && !IsEncoding && HasAsset);
 
         OpenFileCommand = new RelayCommand(() =>
         {
-            if (!string.IsNullOrEmpty(_lastOutputFile) && File.Exists(_lastOutputFile))
+            if (!string.IsNullOrEmpty(LastOutputFile) && File.Exists(LastOutputFile))
             {
-                Process.Start(new ProcessStartInfo { FileName = _lastOutputFile, UseShellExecute = true });
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = LastOutputFile,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    ErrorMessage = IsPersian ? $"خطا در پخش ویدیو: {ex.Message}" : $"Failed to play video: {ex.Message}";
+                }
+            }
+            else
+            {
+                ErrorMessage = IsPersian
+                    ? $"فایل خروجی در مسیر زیر یافت نشد:\n{LastOutputFile}"
+                    : $"Output file not found at path:\n{LastOutputFile}";
             }
         });
 
         OpenFolderCommand = new RelayCommand(() =>
         {
-            if (!string.IsNullOrEmpty(_lastOutputFile) && File.Exists(_lastOutputFile))
+            if (!string.IsNullOrEmpty(LastOutputFile) && File.Exists(LastOutputFile))
             {
-                Process.Start(new ProcessStartInfo { FileName = "explorer.exe", Arguments = $"/select,\"{_lastOutputFile}\"" });
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        Arguments = $"/select,\"{LastOutputFile}\"",
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    ErrorMessage = IsPersian ? $"خطا در باز کردن پوشه: {ex.Message}" : $"Failed to open folder: {ex.Message}";
+                }
+            }
+            else if (!string.IsNullOrEmpty(LastOutputDirectory) && Directory.Exists(LastOutputDirectory))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        Arguments = $"\"{LastOutputDirectory}\"",
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    ErrorMessage = IsPersian ? $"خطا در باز کردن پوشه: {ex.Message}" : $"Failed to open folder: {ex.Message}";
+                }
+            }
+            else
+            {
+                ErrorMessage = IsPersian ? "پوشه خروجی یافت نشد." : "Output directory not found.";
             }
         });
 
@@ -155,6 +210,8 @@ public sealed class MainViewModel : ViewModelBase
                 OnPropertyChanged(nameof(AudioTracksCount));
                 OnPropertyChanged(nameof(SubtitleTracksCount));
                 OnPropertyChanged(nameof(ChaptersCount));
+                OnPropertyChanged(nameof(EffectiveOutputPath));
+                OnPropertyChanged(nameof(EffectiveOutputDirectory));
                 UpdateRiskAndRecommendations();
             }
         }
@@ -177,6 +234,7 @@ public sealed class MainViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsExactSizeGoal));
                 OnPropertyChanged(nameof(IsBestQualityGoal));
                 OnPropertyChanged(nameof(IsSmartCompressGoal));
+                OnPropertyChanged(nameof(EffectiveOutputPath));
                 UpdateRiskAndRecommendations();
             }
         }
@@ -330,6 +388,78 @@ public sealed class MainViewModel : ViewModelBase
         ? (QualityRisk?.RecommendationPersian ?? "در حال ارزیابی کیفیت...")
         : (QualityRisk?.RecommendationEnglish ?? "Evaluating quality profile...");
 
+    public string? CustomOutputFolder
+    {
+        get => _customOutputFolder;
+        set
+        {
+            if (SetField(ref _customOutputFolder, value))
+            {
+                OnPropertyChanged(nameof(EffectiveOutputPath));
+                OnPropertyChanged(nameof(EffectiveOutputDirectory));
+                OnPropertyChanged(nameof(HasCustomOutputFolder));
+            }
+        }
+    }
+
+    public bool HasCustomOutputFolder => !string.IsNullOrWhiteSpace(_customOutputFolder);
+
+    public string EffectiveOutputDirectory
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(_customOutputFolder) && Directory.Exists(_customOutputFolder))
+            {
+                return _customOutputFolder;
+            }
+            if (CurrentAsset != null && !string.IsNullOrWhiteSpace(CurrentAsset.FilePath))
+            {
+                return Path.GetDirectoryName(CurrentAsset.FilePath) ?? string.Empty;
+            }
+            return string.Empty;
+        }
+    }
+
+    public string EffectiveOutputPath
+    {
+        get
+        {
+            if (CurrentAsset == null || string.IsNullOrWhiteSpace(CurrentAsset.FilePath))
+                return string.Empty;
+
+            var dir = EffectiveOutputDirectory;
+            var name = Path.GetFileNameWithoutExtension(CurrentAsset.FilePath);
+            var ext = Path.GetExtension(CurrentAsset.FilePath);
+            if (string.IsNullOrEmpty(ext)) ext = ".mp4";
+
+            var suffix = SelectedGoal switch
+            {
+                CompressionGoal.ExactSize => "_optimized",
+                CompressionGoal.BestQuality => "_hq",
+                CompressionGoal.SmartCompress => "_smart",
+                _ => "_optimized"
+            };
+
+            return Path.Combine(dir, $"{name}{suffix}{ext}");
+        }
+    }
+
+    public string? LastOutputFile
+    {
+        get => _lastOutputFile;
+        private set
+        {
+            if (SetField(ref _lastOutputFile, value))
+            {
+                OnPropertyChanged(nameof(LastOutputDirectory));
+                OnPropertyChanged(nameof(HasLastOutputFile));
+            }
+        }
+    }
+
+    public string? LastOutputDirectory => !string.IsNullOrEmpty(_lastOutputFile) ? Path.GetDirectoryName(_lastOutputFile) : null;
+    public bool HasLastOutputFile => !string.IsNullOrEmpty(_lastOutputFile);
+
     public IReadOnlyList<JobItem> QueueJobs => _queueManager.Jobs;
 
     public ICommand BrowseFileCommand { get; }
@@ -345,6 +475,9 @@ public sealed class MainViewModel : ViewModelBase
     public ICommand GeneratePreviewCommand { get; }
     public ICommand OpenFileCommand { get; }
     public ICommand OpenFolderCommand { get; }
+    public ICommand SelectOutputFolderCommand { get; }
+    public ICommand ResetOutputFolderCommand { get; }
+    public ICommand CopyPathCommand { get; }
 
     public async Task LoadVideoAsync(string filePath)
     {
@@ -395,10 +528,12 @@ public sealed class MainViewModel : ViewModelBase
     {
         var input = CurrentAsset?.FilePath ?? string.Empty;
         var targetBytes = (long)TargetSizeMb * 1024 * 1024;
+        var output = EffectiveOutputPath;
 
         return new JobRequest
         {
             InputPath = input,
+            OutputPath = output,
             Goal = SelectedGoal,
             TargetSizeBytes = targetBytes,
             Resolution = SelectedResolution,
@@ -442,14 +577,12 @@ public sealed class MainViewModel : ViewModelBase
         _activeEncodeCts = new CancellationTokenSource();
 
         var req = BuildCurrentJobRequest();
-        var defaultOut = Path.Combine(
-            Path.GetDirectoryName(CurrentAsset.FilePath) ?? string.Empty,
-            $"{Path.GetFileNameWithoutExtension(CurrentAsset.FilePath)}_compressed.mkv");
+        var plannedOut = req.OutputPath ?? EffectiveOutputPath;
 
         var jobItem = new JobItem
         {
             SourcePath = CurrentAsset.FilePath,
-            OutputPath = defaultOut,
+            OutputPath = plannedOut,
             Goal = SelectedGoal,
             OriginalSizeBytes = CurrentAsset.FileSizeBytes,
             State = JobState.Encoding
@@ -476,7 +609,7 @@ public sealed class MainViewModel : ViewModelBase
                 _activeEncodeCts.Token);
 
             LastValidationResult = result;
-            _lastOutputFile = defaultOut;
+            LastOutputFile = !string.IsNullOrWhiteSpace(result.OutputFilePath) ? result.OutputFilePath : plannedOut;
 
             if (result.IsValid)
             {
@@ -526,6 +659,30 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
 
+    private void OnSelectOutputFolder()
+    {
+        var initialDir = EffectiveOutputDirectory;
+        var dialog = new OpenFolderDialog
+        {
+            Title = IsPersian ? "انتخاب پوشه ذخیره‌سازی فایل خروجی" : "Select Output Folder",
+            InitialDirectory = Directory.Exists(initialDir) ? initialDir : null
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            CustomOutputFolder = dialog.FolderName;
+        }
+    }
+
+    private void OnCopyPath()
+    {
+        if (!string.IsNullOrEmpty(LastOutputFile))
+        {
+            Clipboard.SetText(LastOutputFile);
+            StatusMessage = IsPersian ? "مسیر فایل با موفقیت در کلیپ‌بورد کپی شد." : "File path successfully copied to clipboard.";
+        }
+    }
+
     private void OnClearFile()
     {
         CurrentAsset = null;
@@ -534,5 +691,7 @@ public sealed class MainViewModel : ViewModelBase
         CurrentScreen = AppScreen.Home;
         PreviewResult = null;
         LastValidationResult = null;
+        LastOutputFile = null;
+        CustomOutputFolder = null;
     }
 }

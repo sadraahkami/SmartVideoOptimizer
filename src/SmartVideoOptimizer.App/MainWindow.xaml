@@ -246,6 +246,35 @@
                             </Grid>
                         </Border>
 
+                        <!-- Destination Output Settings -->
+                        <Border Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="18,14" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📁 " FontSize="14" />
+                                        <TextBlock Text="مسیر ذخیره‌سازی خروجی (Output Destination)" FontSize="12" FontWeight="Bold" Foreground="#64748B" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding EffectiveOutputPath}" FontSize="12" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding EffectiveOutputPath}" />
+                                    <TextBlock Text="فایل بهینه‌شده در مسیر و با نام فوق ذخیره خواهد شد." FontSize="11" Foreground="#64748B" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding SelectOutputFolderCommand}" Margin="0,0,8,0" Padding="12,6">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="📂 " />
+                                            <TextBlock Text="تغییر پوشه..." />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding ResetOutputFolderCommand}" Padding="8,6" ToolTip="بازنشانی به پوشه فایل اصلی">
+                                        <TextBlock Text="↺ پیش‌فرض" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
                         <!-- Goal Selector: Exact Size | Best Quality | Smart Compress -->
                         <Border Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
                             <StackPanel>
@@ -500,15 +529,47 @@
                             </Border>
                         </UniformGrid>
 
+                        <!-- Saved File Location Card -->
+                        <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,0,24" MinWidth="580" MaxWidth="660">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock Text="💾 " />
+                                        <TextBlock Text="مسیر ذخیره‌سازی فایل خروجی (Saved Location):" FontSize="12" FontWeight="Bold" Foreground="#94A3B8" />
+                                    </StackPanel>
+                                    <TextBox Text="{Binding LastOutputFile, Mode=OneWay}" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Command="{Binding CopyPathCommand}" VerticalAlignment="Center" Margin="12,0,0,0" Padding="12,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📋 " />
+                                        <TextBlock Text="کپی مسیر" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button Style="{StaticResource PrimaryButton}" Command="{Binding OpenFileCommand}" Margin="0,0,10,0">
-                                <TextBlock Text="▶ Play Video (پخش ویدیو)" />
+                            <Button Style="{StaticResource PrimaryButton}" Command="{Binding OpenFileCommand}" Margin="0,0,10,0" Padding="18,10">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="▶ " />
+                                    <TextBlock Text="پخش ویدیو" FontWeight="Bold" />
+                                </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource SecondaryButton}" Command="{Binding OpenFolderCommand}" Margin="0,0,10,0">
-                                <TextBlock Text="📁 Open Folder (پوشه خروجی)" />
+                            <Button Style="{StaticResource SecondaryButton}" Command="{Binding OpenFolderCommand}" Margin="0,0,10,0" Padding="18,10">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📁 " />
+                                    <TextBlock Text="پوشه خروجی" FontWeight="Bold" />
+                                </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource SecondaryButton}" Command="{Binding ClearFileCommand}">
-                                <TextBlock Text="➕ New Job (فایل جدید)" />
+                            <Button Style="{StaticResource SecondaryButton}" Command="{Binding ClearFileCommand}" Padding="18,10">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="➕ " />
+                                    <TextBlock Text="فایل جدید" />
+                                </StackPanel>
                             </Button>
                         </StackPanel>
                     </StackPanel>
