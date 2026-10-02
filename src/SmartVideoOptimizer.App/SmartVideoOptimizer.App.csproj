@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartVideoOptimizer.Core\SmartVideoOptimizer.Core.csproj" />
+    <ProjectReference Include="..\SmartVideoOptimizer.Media\SmartVideoOptimizer.Media.csproj" />
+    <ProjectReference Include="..\SmartVideoOptimizer.Platform.Windows\SmartVideoOptimizer.Platform.Windows.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+</Project>

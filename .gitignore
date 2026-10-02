@@ -1,0 +1,31 @@
+# Build and output directories
+bin/
+obj/
+out/
+publish/
+
+# Visual Studio & IDE files
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Native binaries & heavy tools (Clean Distribution State)
+tools/bin/
+tools/*.zip
+tools/*.tar.gz
+
+# Test fixtures & temporary media
+tests/fixtures/*.mkv
+tests/fixtures/*.mp4
+tests/fixtures/*.ts
+
+# Logs and system internals
+*.log
+logs/
+.cache/
+
+# Internal technical documentation (STRICT: Local only, never commit/push)
+TECHNICAL_DOCS.md

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmartVideoOptimizer.App/SmartVideoOptimizer.App.csproj" />
+    <Project Path="src/SmartVideoOptimizer.Core/SmartVideoOptimizer.Core.csproj" />
+    <Project Path="src/SmartVideoOptimizer.Media/SmartVideoOptimizer.Media.csproj" />
+    <Project Path="src/SmartVideoOptimizer.Platform.Windows/SmartVideoOptimizer.Platform.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartVideoOptimizer.Tests/SmartVideoOptimizer.Tests.csproj" />
+  </Folder>
+</Solution>
