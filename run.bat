@@ -1,15 +1,39 @@
 @echo off
-setlocal
-title SmartVideoOptimizer - Launching Application
+setlocal enabledelayedexpansion
+title SmartVideoOptimizer - Desktop Studio
+
+:: Ensure current working directory is always this script's directory
+cd /d "%~dp0"
+
 echo [SmartVideoOptimizer] Starting desktop application (.NET 10 LTS)...
 
-if exist "src\SmartVideoOptimizer.App\bin\Release\net10.0-windows\SmartVideoOptimizer.App.exe" (
-    start "" "src\SmartVideoOptimizer.App\bin\Release\net10.0-windows\SmartVideoOptimizer.App.exe"
-) else if exist "src\SmartVideoOptimizer.App\bin\Debug\net10.0-windows\SmartVideoOptimizer.App.exe" (
-    start "" "src\SmartVideoOptimizer.App\bin\Debug\net10.0-windows\SmartVideoOptimizer.App.exe"
+if exist "%~dp0SmartVideoOptimizer.exe" (
+    start "" "%~dp0SmartVideoOptimizer.exe"
+    exit /b 0
+)
+
+if exist "%~dp0SmartVideoOptimizer.App.exe" (
+    start "" "%~dp0SmartVideoOptimizer.App.exe"
+    exit /b 0
+)
+
+if exist "%~dp0src\SmartVideoOptimizer.App\bin\Release\net10.0-windows\SmartVideoOptimizer.App.exe" (
+    start "" "%~dp0src\SmartVideoOptimizer.App\bin\Release\net10.0-windows\SmartVideoOptimizer.App.exe"
+    exit /b 0
+)
+
+if exist "%~dp0src\SmartVideoOptimizer.App\bin\Debug\net10.0-windows\SmartVideoOptimizer.App.exe" (
+    start "" "%~dp0src\SmartVideoOptimizer.App\bin\Debug\net10.0-windows\SmartVideoOptimizer.App.exe"
+    exit /b 0
+)
+
+echo [SmartVideoOptimizer] Compiling solution in Release mode...
+dotnet build "%~dp0SmartVideoOptimizer.slnx" -c Release
+
+if exist "%~dp0src\SmartVideoOptimizer.App\bin\Release\net10.0-windows\SmartVideoOptimizer.App.exe" (
+    start "" "%~dp0src\SmartVideoOptimizer.App\bin\Release\net10.0-windows\SmartVideoOptimizer.App.exe"
 ) else (
-    echo [SmartVideoOptimizer] Executable not found. Compiling first...
-    dotnet build src/SmartVideoOptimizer.App -c Release
-    start "" "src\SmartVideoOptimizer.App\bin\Release\net10.0-windows\SmartVideoOptimizer.App.exe"
+    echo [SmartVideoOptimizer] Error: Could not launch application.
+    pause
 )
 exit /b 0

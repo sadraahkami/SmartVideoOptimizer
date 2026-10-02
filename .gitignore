@@ -3,6 +3,10 @@ bin/
 obj/
 out/
 publish/
+*.exe
+*.dll
+*.pdb
+
 
 # Visual Studio & IDE files
 .vs/
