@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SmartVideoOptimizer.Core\SmartVideoOptimizer.Core.csproj" />
     <ProjectReference Include="..\..\src\SmartVideoOptimizer.Media\SmartVideoOptimizer.Media.csproj" />
+    <ProjectReference Include="..\..\src\SmartVideoOptimizer.Platform.Windows\SmartVideoOptimizer.Platform.Windows.csproj" />
   </ItemGroup>
 
 </Project>
