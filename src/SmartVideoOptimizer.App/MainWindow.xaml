@@ -139,16 +139,19 @@
                 <!-- Navigation Tabs -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{StaticResource SecondaryButton}" Command="{Binding SetScreenCommand}" CommandParameter="{x:Static vm:AppScreen.Home}" Margin="0,0,8,0">
-                        <TextBlock Text="🏠 Home" />
+                        <TextBlock Text="🏠 شروع (Home)" />
                     </Button>
                     <Button Style="{StaticResource SecondaryButton}" Command="{Binding SetScreenCommand}" CommandParameter="{x:Static vm:AppScreen.Optimize}" IsEnabled="{Binding HasAsset}" Margin="0,0,8,0">
-                        <TextBlock Text="⚙️ Optimize" />
+                        <TextBlock Text="⚙️ بهینه‌سازی (Optimize)" />
                     </Button>
                     <Button Style="{StaticResource SecondaryButton}" Command="{Binding SetScreenCommand}" CommandParameter="{x:Static vm:AppScreen.Queue}" Margin="0,0,8,0">
-                        <TextBlock Text="📋 Queue" />
+                        <TextBlock Text="📋 صف پردازش (Queue)" />
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding SetScreenCommand}" CommandParameter="{x:Static vm:AppScreen.History}" Margin="0,0,8,0">
+                        <TextBlock Text="📜 سوابق و تاریخچه (History)" />
                     </Button>
                     <Button Style="{StaticResource SecondaryButton}" Command="{Binding SetScreenCommand}" CommandParameter="{x:Static vm:AppScreen.Results}" IsEnabled="{Binding LastValidationResult, Converter={StaticResource NullToVis}}">
-                        <TextBlock Text="🏆 Results" />
+                        <TextBlock Text="🏆 نتیجه (Results)" />
                     </Button>
                 </StackPanel>
 
@@ -491,7 +494,219 @@
                 </Grid>
             </Grid>
 
-            <!-- SCREEN 4: RESULTS VIEW -->
+            <!-- SCREEN 4: HISTORY VIEW (سوابق و تاریخچه مقایسه‌ای) -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentScreen}" Value="{x:Static vm:AppScreen.History}">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Top Bar: Title & Global Actions -->
+                    <Border Grid.Row="0" Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="20,16" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📜 " FontSize="18" VerticalAlignment="Center" />
+                                    <TextBlock Text="سوابق و تاریخچه بهینه‌سازی ویدیوها" FontSize="18" FontWeight="Bold" Foreground="#F8FAFC" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Text="مشاهده گزارش مقایسه‌ای ویدیوهای ورودی، فایل‌های تحویل‌داده‌شده، میزان کاهش حجم و دسترسی سریع به فایل‌ها." FontSize="12" Foreground="#94A3B8" Margin="0,4,0,0" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource SecondaryButton}" Command="{Binding RefreshHistoryCommand}" Margin="0,0,8,0" Padding="14,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="↺ " />
+                                        <TextBlock Text="به‌روزرسانی" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource DangerButton}" Command="{Binding ClearHistoryCommand}" Padding="14,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🗑️ " />
+                                        <TextBlock Text="پاکسازی تاریخچه" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Summary Metrics Strip -->
+                    <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
+                        <Border Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,8,0">
+                            <StackPanel>
+                                <TextBlock Text="تعداد کل ویدیوها" FontSize="11" FontWeight="Bold" Foreground="#64748B" />
+                                <TextBlock Text="{Binding HistoryJobs.Count}" FontSize="20" FontWeight="Bold" Foreground="#38BDF8" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="4,0,4,0">
+                            <StackPanel>
+                                <TextBlock Text="ویدیوهای موفق" FontSize="11" FontWeight="Bold" Foreground="#64748B" />
+                                <TextBlock Text="{Binding TotalCompletedJobsCount}" FontSize="20" FontWeight="Bold" Foreground="#10B981" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="4,0,4,0">
+                            <StackPanel>
+                                <TextBlock Text="کل فضای ذخیره‌شده" FontSize="11" FontWeight="Bold" Foreground="#64748B" />
+                                <TextBlock Text="{Binding TotalSpaceSavedFormatted}" FontSize="20" FontWeight="Bold" Foreground="#A78BFA" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="8,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="ذخیره‌سازی پایگاه داده" FontSize="11" FontWeight="Bold" Foreground="#64748B" />
+                                <TextBlock Text="SQLite پایدار ✓" FontSize="16" FontWeight="Bold" Foreground="#E2E8F0" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- History Items List or Empty State -->
+                    <Border Grid.Row="2" Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="20">
+                        <Grid>
+                            <!-- Empty State View -->
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40"
+                                        Visibility="{Binding HasHistoryJobs, Converter={StaticResource InverseBoolToVis}}">
+                                <Border Width="64" Height="64" Background="#1E293B" CornerRadius="32" HorizontalAlignment="Center" Margin="0,0,0,16">
+                                    <TextBlock Text="📭" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="هنوز هیچ ویدیویی در سابقه ذخیره نشده است" FontSize="16" FontWeight="Bold" Foreground="#F8FAFC" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                                <TextBlock Text="پس از انجام اولین بهینه‌سازی، اطلاعات کامل ویدیوهای ورودی و خروجی در اینجا ثبت خواهد شد." FontSize="13" Foreground="#64748B" HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- History Cards List -->
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding HasHistoryJobs, Converter={StaticResource BoolToVis}}">
+                                <ItemsControl ItemsSource="{Binding HistoryJobs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#161F33" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <!-- Row 1: Source & Output Titles + Status Badge + Date -->
+                                                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                                    <TextBlock Text="ورودی" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding FileName}" FontSize="15" FontWeight="Bold" Foreground="#F8FAFC" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourcePath}" />
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                                <Border Background="#0369A1" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                                    <TextBlock Text="خروجی" FontSize="10" FontWeight="Bold" Foreground="#E0F2FE" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding OutputFileName}" FontSize="14" FontWeight="SemiBold" Foreground="#38BDF8" TextTrimming="CharacterEllipsis" ToolTip="{Binding OutputPath}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                            <Border Background="{Binding StateBadgeColor}" CornerRadius="6" Padding="10,4" HorizontalAlignment="Right">
+                                                                <TextBlock Text="{Binding StateTitlePersian}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" />
+                                                            </Border>
+                                                            <TextBlock Text="{Binding FormattedDate}" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,6,0,0" />
+                                                        </StackPanel>
+                                                    </Grid>
+
+                                                    <!-- Row 2: Metrics Comparison Grid -->
+                                                    <Border Grid.Row="1" Background="#0F172A" CornerRadius="8" Padding="14,10" Margin="0,0,0,12">
+                                                        <UniformGrid Columns="4">
+                                                            <StackPanel>
+                                                                <TextBlock Text="حجم فایل ورودی" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                                                                <TextBlock Text="{Binding HumanReadableOriginalSize}" FontSize="14" FontWeight="Bold" Foreground="#E2E8F0" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                            <StackPanel>
+                                                                <TextBlock Text="حجم تحویل‌داده‌شده" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                                                                <TextBlock Text="{Binding HumanReadableOutputSize}" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                            <StackPanel>
+                                                                <TextBlock Text="میزان صرفه‌جویی" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                                                                <TextBlock Text="{Binding SavingsLabel}" FontSize="14" FontWeight="Bold" Foreground="#10B981" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                            <StackPanel>
+                                                                <TextBlock Text="هدف فشرده‌سازی" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                                                                <TextBlock Text="{Binding GoalTitlePersian}" FontSize="13" FontWeight="SemiBold" Foreground="#C4B5FD" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </UniformGrid>
+                                                    </Border>
+
+                                                    <!-- Row 3: Output Path and Action Buttons -->
+                                                    <Grid Grid.Row="2">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding OutputPath}" FontSize="11" Foreground="#64748B" TextTrimming="CharacterEllipsis" ToolTip="{Binding OutputPath}" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <Button Style="{StaticResource PrimaryButton}"
+                                                                    Command="{Binding DataContext.PlayJobFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding OutputPath}"
+                                                                    Margin="0,0,6,0" Padding="12,6" ToolTip="پخش فایل خروجی">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="▶ " />
+                                                                    <TextBlock Text="پخش" />
+                                                                </StackPanel>
+                                                            </Button>
+                                                            <Button Style="{StaticResource SecondaryButton}"
+                                                                    Command="{Binding DataContext.OpenJobFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding OutputPath}"
+                                                                    Margin="0,0,6,0" Padding="12,6" ToolTip="نمایش فایل در پوشه">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="📁 " />
+                                                                    <TextBlock Text="پوشه" />
+                                                                </StackPanel>
+                                                            </Button>
+                                                            <Button Style="{StaticResource SecondaryButton}"
+                                                                    Command="{Binding DataContext.CopyJobPathCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding OutputPath}"
+                                                                    Margin="0,0,6,0" Padding="10,6" ToolTip="کپی مسیر فایل">
+                                                                <TextBlock Text="📋" />
+                                                            </Button>
+                                                            <Button Style="{StaticResource SecondaryButton}"
+                                                                    Command="{Binding DataContext.DeleteJobCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding Id}"
+                                                                    Padding="10,6" ToolTip="حذف از سابقه">
+                                                                <TextBlock Text="🗑️" Foreground="#EF4444" />
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- SCREEN 5: RESULTS VIEW -->
             <Grid>
                 <Grid.Style>
                     <Style TargetType="Grid">

@@ -22,6 +22,7 @@ public enum AppScreen
     Home,
     Optimize,
     Queue,
+    History,
     Results
 }
 
@@ -178,7 +179,112 @@ public sealed class MainViewModel : ViewModelBase
             }
         });
 
+        PlayJobFileCommand = new RelayCommand(p =>
+        {
+            if (p is string path && !string.IsNullOrEmpty(path))
+            {
+                if (File.Exists(path))
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorMessage = IsPersian ? $"خطا در اجرای ویدیو: {ex.Message}" : $"Failed to play video: {ex.Message}";
+                    }
+                }
+                else
+                {
+                    ErrorMessage = IsPersian ? $"فایل ویدیو یافت نشد:\n{path}" : $"Video file not found:\n{path}";
+                }
+            }
+        });
+
+        OpenJobFolderCommand = new RelayCommand(p =>
+        {
+            if (p is string path && !string.IsNullOrEmpty(path))
+            {
+                if (File.Exists(path))
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo { FileName = "explorer.exe", Arguments = $"/select,\"{path}\"", UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorMessage = IsPersian ? $"خطا در باز کردن پوشه: {ex.Message}" : $"Failed to open folder: {ex.Message}";
+                    }
+                }
+                else
+                {
+                    var dir = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                    {
+                        try
+                        {
+                            Process.Start(new ProcessStartInfo { FileName = "explorer.exe", Arguments = $"\"{dir}\"", UseShellExecute = true });
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorMessage = IsPersian ? $"خطا در باز کردن پوشه: {ex.Message}" : $"Failed to open folder: {ex.Message}";
+                        }
+                    }
+                    else
+                    {
+                        ErrorMessage = IsPersian ? "پوشه فایل یافت نشد." : "Folder not found.";
+                    }
+                }
+            }
+        });
+
+        CopyJobPathCommand = new RelayCommand(p =>
+        {
+            if (p is string path && !string.IsNullOrEmpty(path))
+            {
+                Clipboard.SetText(path);
+                StatusMessage = IsPersian ? "مسیر فایل در کلیپ‌بورد کپی شد." : "File path copied to clipboard.";
+            }
+        });
+
+        DeleteJobCommand = new AsyncRelayCommand(async p =>
+        {
+            if (p is Guid id)
+            {
+                await _queueManager.DeleteJobAsync(id);
+                NotifyHistoryProperties();
+            }
+        });
+
+        ClearHistoryCommand = new AsyncRelayCommand(async () =>
+        {
+            await _queueManager.ClearHistoryAsync();
+            NotifyHistoryProperties();
+            StatusMessage = IsPersian ? "سوابق بهینه‌سازی پاکسازی شدند." : "Optimization history cleared.";
+        });
+
+        RefreshHistoryCommand = new AsyncRelayCommand(async () =>
+        {
+            await _queueManager.RefreshAsync();
+            NotifyHistoryProperties();
+            StatusMessage = IsPersian ? "سوابق به‌روزرسانی شدند." : "History refreshed.";
+        });
+
+        _queueManager.JobStateChanged += _ =>
+        {
+            Application.Current?.Dispatcher?.Invoke(NotifyHistoryProperties);
+        };
+
         _ = InitializeAsync();
+    }
+
+    private void NotifyHistoryProperties()
+    {
+        OnPropertyChanged(nameof(QueueJobs));
+        OnPropertyChanged(nameof(HistoryJobs));
+        OnPropertyChanged(nameof(HasHistoryJobs));
+        OnPropertyChanged(nameof(TotalCompletedJobsCount));
+        OnPropertyChanged(nameof(TotalSpaceSavedFormatted));
     }
 
     private async Task InitializeAsync()
@@ -187,6 +293,7 @@ public sealed class MainViewModel : ViewModelBase
         {
             await _queueManager.InitializeAndRecoverAsync();
             await _capabilityDetector.DetectCapabilitiesAsync();
+            NotifyHistoryProperties();
         }
         catch { /* ignored */ }
     }
@@ -461,6 +568,34 @@ public sealed class MainViewModel : ViewModelBase
     public bool HasLastOutputFile => !string.IsNullOrEmpty(_lastOutputFile);
 
     public IReadOnlyList<JobItem> QueueJobs => _queueManager.Jobs;
+    public IReadOnlyList<JobItem> HistoryJobs => _queueManager.Jobs;
+    public bool HasHistoryJobs => _queueManager.Jobs.Count > 0;
+    public int TotalCompletedJobsCount => _queueManager.Jobs.Count(j => j.State == JobState.Completed);
+
+    public string TotalSpaceSavedFormatted
+    {
+        get
+        {
+            long totalOriginal = 0;
+            long totalOutput = 0;
+            foreach (var j in _queueManager.Jobs)
+            {
+                if (j.State == JobState.Completed && j.OutputSizeBytes.HasValue)
+                {
+                    totalOriginal += j.OriginalSizeBytes;
+                    totalOutput += j.OutputSizeBytes.Value;
+                }
+            }
+            var saved = Math.Max(0, totalOriginal - totalOutput);
+            const double mb = 1024.0 * 1024.0;
+            const double gb = 1024.0 * 1024.0 * 1024.0;
+            if (saved >= gb)
+            {
+                return $"{saved / gb:F2} GB";
+            }
+            return $"{saved / mb:F1} MB";
+        }
+    }
 
     public ICommand BrowseFileCommand { get; }
     public ICommand LoadFileCommand { get; }
@@ -478,6 +613,12 @@ public sealed class MainViewModel : ViewModelBase
     public ICommand SelectOutputFolderCommand { get; }
     public ICommand ResetOutputFolderCommand { get; }
     public ICommand CopyPathCommand { get; }
+    public ICommand PlayJobFileCommand { get; }
+    public ICommand OpenJobFolderCommand { get; }
+    public ICommand CopyJobPathCommand { get; }
+    public ICommand DeleteJobCommand { get; }
+    public ICommand ClearHistoryCommand { get; }
+    public ICommand RefreshHistoryCommand { get; }
 
     public async Task LoadVideoAsync(string filePath)
     {

@@ -148,4 +148,57 @@ public sealed class QueueManager
             JobStateChanged?.Invoke(updated);
         }
     }
+
+    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    {
+        var allJobs = await _repository.GetAllJobsAsync(cancellationToken).ConfigureAwait(false);
+        lock (_lock)
+        {
+            _jobs.Clear();
+            _jobs.AddRange(allJobs);
+        }
+        JobStateChanged?.Invoke(_jobs.FirstOrDefault() ?? new JobItem
+        {
+            SourcePath = string.Empty,
+            OutputPath = string.Empty
+        });
+    }
+
+    public async Task DeleteJobAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        lock (_lock)
+        {
+            _jobs.RemoveAll(j => j.Id == id);
+        }
+        await _repository.DeleteJobAsync(id, cancellationToken).ConfigureAwait(false);
+        JobStateChanged?.Invoke(new JobItem
+        {
+            SourcePath = string.Empty,
+            OutputPath = string.Empty
+        });
+    }
+
+    public async Task ClearHistoryAsync(CancellationToken cancellationToken = default)
+    {
+        List<Guid> finishedIds;
+        lock (_lock)
+        {
+            finishedIds = _jobs
+                .Where(j => j.State == JobState.Completed || j.State == JobState.Failed || j.State == JobState.Cancelled)
+                .Select(j => j.Id)
+                .ToList();
+            _jobs.RemoveAll(j => finishedIds.Contains(j.Id));
+        }
+
+        foreach (var id in finishedIds)
+        {
+            await _repository.DeleteJobAsync(id, cancellationToken).ConfigureAwait(false);
+        }
+
+        JobStateChanged?.Invoke(new JobItem
+        {
+            SourcePath = string.Empty,
+            OutputPath = string.Empty
+        });
+    }
 }
